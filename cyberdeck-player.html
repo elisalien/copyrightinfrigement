@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CYBERDECK PLAYER</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+body {
+  background: #000;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Share Tech Mono', monospace;
+  overflow: hidden;
+}
+
+/* Background grid */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,100,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,100,255,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+
+/* Ambient glow bg */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 40% at 50% 50%, rgba(40,0,120,0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ─── SHELL ─────────────────────────────────────────────── */
+.shell {
+  position: relative;
+  width: 480px;
+  background: linear-gradient(145deg,
+    rgba(255,255,255,0.09) 0%,
+    rgba(80,120,255,0.06) 40%,
+    rgba(100,0,255,0.04) 100%);
+  border: 1px solid rgba(100,160,255,0.35);
+  border-radius: 28px;
+  padding: 28px 28px 22px;
+  box-shadow:
+    0 0 0 1px rgba(0,80,255,0.15),
+    0 0 60px rgba(0,100,255,0.18),
+    0 0 120px rgba(80,0,255,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    inset 0 0 60px rgba(0,60,180,0.08);
+  backdrop-filter: blur(2px);
+}
+
+/* glass rim highlight */
+.shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* bottom LED strip */
+.shell::after {
+  content: '';
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #0066ff, #6600ff, #0066ff, transparent);
+  border-radius: 2px;
+  filter: blur(2px);
+  box-shadow: 0 0 12px rgba(0,100,255,0.8), 0 0 24px rgba(100,0,255,0.4);
+}
+
+/* ─── HEADER ─────────────────────────────────────────────── */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+.logo {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.35em;
+  color: rgba(160,200,255,0.9);
+  text-shadow: 0 0 12px rgba(100,160,255,0.6);
+}
+
+.status-pill {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  padding: 3px 10px;
+  border: 1px solid rgba(0,200,255,0.3);
+  border-radius: 20px;
+  color: #00c8ff;
+  background: rgba(0,100,200,0.12);
+  text-shadow: 0 0 6px rgba(0,200,255,0.6);
+  animation: pulse-status 2s ease-in-out infinite;
+}
+
+@keyframes pulse-status {
+  0%,100% { opacity: 1; box-shadow: 0 0 8px rgba(0,200,255,0.2); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 rgba(0,200,255,0); }
+}
+
+/* ─── CD DISC ─────────────────────────────────────────────── */
+.disc-area {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+/* glow behind disc */
+.disc-area::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(80,0,255,0.2) 0%, rgba(0,60,255,0.1) 40%, transparent 70%);
+  filter: blur(8px);
+}
+
+.disc {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Outer edge */
+.disc-outer {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(0,120,255,0.55),
+    rgba(120,0,255,0.55),
+    rgba(0,200,255,0.45),
+    rgba(255,60,160,0.35),
+    rgba(0,255,200,0.35),
+    rgba(80,0,255,0.5),
+    rgba(0,120,255,0.55)
+  );
+  box-shadow:
+    inset 0 0 30px rgba(0,0,0,0.6),
+    0 0 20px rgba(0,100,255,0.25),
+    0 0 40px rgba(80,0,200,0.15);
+}
+
+/* Reflective shimmer on top */
+.disc-shimmer {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 60deg,
+    rgba(255,255,255,0.18),
+    transparent 20%,
+    rgba(255,255,255,0.08) 35%,
+    transparent 50%,
+    rgba(255,255,255,0.12) 70%,
+    transparent 85%,
+    rgba(255,255,255,0.18) 100%
+  );
+}
+
+/* Concentric rings (like a real CD) */
+.disc-rings {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    repeating-radial-gradient(
+      circle at center,
+      transparent 0px,
+      transparent 6px,
+      rgba(0,0,0,0.25) 6px,
+      rgba(0,0,0,0.25) 7px
+    );
+}
+
+/* Inner transparent zone */
+.disc-inner {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.75);
+  border: 1px solid rgba(100,160,255,0.4);
+  box-shadow:
+    0 0 16px rgba(80,0,255,0.4),
+    inset 0 0 20px rgba(80,0,255,0.25);
+}
+
+/* Center hole */
+.disc-hole {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #000;
+  border: 1px solid rgba(100,160,255,0.5);
+  box-shadow: 0 0 8px rgba(80,0,255,0.6);
+}
+
+/* Center glow orb (the purple one from the photo) */
+.disc-orb {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #cc44ff 0%, #6600cc 50%, transparent 80%);
+  filter: blur(1px);
+  box-shadow:
+    0 0 12px rgba(160,0,255,0.9),
+    0 0 24px rgba(100,0,200,0.6),
+    0 0 40px rgba(80,0,160,0.3);
+  animation: orb-pulse 2s ease-in-out infinite;
+  z-index: 10;
+}
+
+@keyframes orb-pulse {
+  0%,100% { transform: translate(-50%, -50%) scale(1); filter: blur(1px); }
+  50% { transform: translate(-50%, -50%) scale(1.2); filter: blur(2px); }
+}
+
+/* Spinning state */
+.disc.playing .disc-outer,
+.disc.playing .disc-shimmer,
+.disc.playing .disc-rings {
+  animation: spin 3.5s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ─── TRACK INFO ─────────────────────────────────────────── */
+.track-info {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.track-name {
+  font-family: 'Orbitron', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #e0eeff;
+  letter-spacing: 0.05em;
+  margin-bottom: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 0 10px rgba(100,160,255,0.5);
+}
+
+.track-meta {
+  font-size: 10px;
+  color: rgba(100,160,255,0.6);
+  letter-spacing: 0.25em;
+}
+
+/* ─── PROGRESS ───────────────────────────────────────────── */
+.progress-wrap {
+  margin-bottom: 20px;
+}
+
+.progress-track {
+  width: 100%;
+  height: 3px;
+  background: rgba(80,120,255,0.15);
+  border: 1px solid rgba(80,120,255,0.25);
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0055ff, #8800ff);
+  border-radius: 2px;
+  width: 0%;
+  box-shadow: 0 0 8px rgba(0,100,255,0.7);
+  transition: width 0.4s linear;
+}
+
+.progress-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #aad0ff;
+  border: 1px solid rgba(100,160,255,0.8);
+  box-shadow: 0 0 6px rgba(0,150,255,0.8);
+  left: 0%;
+  pointer-events: none;
+  transition: left 0.4s linear;
+}
+
+.time-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  font-size: 9px;
+  color: rgba(100,160,255,0.55);
+  letter-spacing: 0.1em;
+}
+
+/* ─── CONTROLS ───────────────────────────────────────────── */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.ctrl {
+  background: rgba(0,40,120,0.25);
+  border: 1px solid rgba(80,140,255,0.25);
+  color: rgba(140,190,255,0.85);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 9px 14px;
+  border-radius: 8px;
+  transition: all 0.12s;
+  line-height: 1;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.ctrl:hover {
+  background: rgba(0,80,200,0.3);
+  border-color: rgba(100,180,255,0.5);
+  color: #c0e0ff;
+  box-shadow: 0 0 12px rgba(0,100,255,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+.ctrl:active { transform: scale(0.94); }
+
+.ctrl.main {
+  font-size: 18px;
+  padding: 11px 20px;
+  background: rgba(0,60,180,0.35);
+  border-color: rgba(80,160,255,0.5);
+  box-shadow: 0 0 16px rgba(0,80,255,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+.ctrl.main:hover {
+  background: rgba(0,80,200,0.45);
+  box-shadow: 0 0 24px rgba(0,100,255,0.35), inset 0 1px 0 rgba(255,255,255,0.12);
+}
+
+/* ─── VOLUME ─────────────────────────────────────────────── */
+.vol-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 0 2px;
+}
+
+.vol-label {
+  font-size: 9px;
+  color: rgba(100,160,255,0.55);
+  letter-spacing: 0.2em;
+  min-width: 28px;
+}
+
+.vol-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 3px;
+  background: rgba(80,120,255,0.2);
+  border: none;
+  border-radius: 2px;
+  outline: none;
+}
+
+.vol-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #7ab0ff;
+  border: 1px solid rgba(120,180,255,0.8);
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(0,120,255,0.6);
+}
+
+.vol-pct {
+  font-size: 9px;
+  color: rgba(100,160,255,0.55);
+  min-width: 28px;
+  text-align: right;
+}
+
+/* ─── PLAYLIST ───────────────────────────────────────────── */
+.pl-section {
+  border-top: 1px solid rgba(80,120,255,0.15);
+  padding-top: 16px;
+}
+
+.pl-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.pl-title {
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  color: rgba(100,160,255,0.5);
+}
+
+.btn-add {
+  background: rgba(80,0,180,0.2);
+  border: 1px solid rgba(120,0,255,0.4);
+  color: #b080ff;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  padding: 4px 10px;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.12s;
+}
+
+.btn-add:hover {
+  background: rgba(100,0,200,0.3);
+  border-color: rgba(160,60,255,0.7);
+  color: #cc99ff;
+  box-shadow: 0 0 10px rgba(100,0,255,0.25);
+}
+
+.playlist {
+  max-height: 160px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(80,100,255,0.3) transparent;
+}
+
+.pl-empty {
+  text-align: center;
+  padding: 18px;
+  font-size: 10px;
+  color: rgba(80,120,255,0.35);
+  letter-spacing: 0.15em;
+  line-height: 1.8;
+}
+
+.pl-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(80,120,255,0.08);
+  transition: all 0.1s;
+  border-radius: 4px;
+}
+
+.pl-item:hover { background: rgba(0,60,180,0.15); }
+
+.pl-item.active {
+  background: rgba(0,60,180,0.22);
+  border-left: 2px solid #5599ff;
+  padding-left: 6px;
+}
+
+.pl-num {
+  font-size: 9px;
+  color: rgba(80,140,255,0.45);
+  min-width: 18px;
+  text-align: right;
+}
+
+.pl-item.active .pl-num { color: #9966ff; }
+
+.pl-name {
+  flex: 1;
+  font-size: 11px;
+  color: rgba(160,200,255,0.75);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pl-item.active .pl-name { color: #d0e8ff; }
+
+.pl-del {
+  background: none;
+  border: none;
+  color: rgba(180,100,255,0.35);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color 0.1s;
+}
+
+.pl-del:hover { color: rgba(180,100,255,0.9); }
+
+#fileInput { display: none; }
+
+/* ─── SCREW CORNERS (hardware detail) ───────────────────── */
+.screw {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(100,160,255,0.25);
+  background: radial-gradient(circle at 35% 35%, rgba(200,220,255,0.2), rgba(20,30,60,0.6));
+}
+.screw::before {
+  content: '+';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 7px;
+  color: rgba(100,160,255,0.3);
+  line-height: 1;
+}
+.screw.tl { top: 12px; left: 14px; }
+.screw.tr { top: 12px; right: 14px; }
+.screw.bl { bottom: 24px; left: 14px; }
+.screw.br { bottom: 24px; right: 14px; }
+
+/* corner bracket accents */
+.bracket {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+}
+.bracket.tl { top: 0; left: 0; border-top: 1.5px solid rgba(0,200,255,0.5); border-left: 1.5px solid rgba(0,200,255,0.5); border-radius: 28px 0 0 0; }
+.bracket.tr { top: 0; right: 0; border-top: 1.5px solid rgba(0,200,255,0.5); border-right: 1.5px solid rgba(0,200,255,0.5); border-radius: 0 28px 0 0; }
+.bracket.bl { bottom: 0; left: 0; border-bottom: 1.5px solid rgba(0,200,255,0.5); border-left: 1.5px solid rgba(0,200,255,0.5); border-radius: 0 0 0 28px; }
+.bracket.br { bottom: 0; right: 0; border-bottom: 1.5px solid rgba(0,200,255,0.5); border-right: 1.5px solid rgba(0,200,255,0.5); border-radius: 0 0 28px 0; }
+
+/* scan lines overlay */
+.scanlines {
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,0.08) 3px,
+    rgba(0,0,0,0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 999;
+}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+
+<div class="shell">
+  <!-- hardware details -->
+  <div class="screw tl"></div>
+  <div class="screw tr"></div>
+  <div class="screw bl"></div>
+  <div class="screw br"></div>
+  <div class="bracket tl"></div>
+  <div class="bracket tr"></div>
+  <div class="bracket bl"></div>
+  <div class="bracket br"></div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">CYBERDECK // v2.0K</div>
+    <div class="status-pill" id="statusPill">◌ STANDBY</div>
+  </div>
+
+  <!-- CD Disc -->
+  <div class="disc-area">
+    <div class="disc" id="disc">
+      <div class="disc-outer"></div>
+      <div class="disc-shimmer"></div>
+      <div class="disc-rings"></div>
+      <div class="disc-inner"></div>
+      <div class="disc-orb"></div>
+      <div class="disc-hole"></div>
+    </div>
+  </div>
+
+  <!-- Track info -->
+  <div class="track-info">
+    <div class="track-name" id="trackName">NO DISC INSERTED</div>
+    <div class="track-meta" id="trackMeta">[ — / — ]</div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap">
+    <div class="progress-track" id="progressTrack">
+      <div class="progress-fill" id="progressFill"></div>
+      <div class="progress-thumb" id="progressThumb"></div>
+    </div>
+    <div class="time-row">
+      <span id="timeNow">0:00</span>
+      <span id="timeTotal">0:00</span>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="ctrl" id="btnPrev" title="Précédent">⏮</button>
+    <button class="ctrl" id="btnStop" title="Stop">⏹</button>
+    <button class="ctrl main" id="btnPlay" title="Play/Pause">▶</button>
+    <button class="ctrl" id="btnNext" title="Suivant">⏭</button>
+  </div>
+
+  <!-- Volume -->
+  <div class="vol-row">
+    <span class="vol-label">VOL</span>
+    <input class="vol-slider" type="range" id="volSlider" min="0" max="1" step="0.01" value="0.8">
+    <span class="vol-pct" id="volPct">80%</span>
+  </div>
+
+  <!-- Playlist -->
+  <div class="pl-section">
+    <div class="pl-header">
+      <div class="pl-title">// PLAYLIST</div>
+      <button class="btn-add" id="btnAdd">⊕ ADD TRACKS</button>
+    </div>
+    <input type="file" id="fileInput" accept="audio/*" multiple>
+    <div class="playlist" id="playlist">
+      <div class="pl-empty">// AUCUNE PISTE CHARGÉE<br>Clique sur ADD TRACKS pour commencer</div>
+    </div>
+  </div>
+</div>
+
+<audio id="audio"></audio>
+
+<script>
+const audio = document.getElementById('audio');
+const disc = document.getElementById('disc');
+const btnPlay = document.getElementById('btnPlay');
+const btnPrev = document.getElementById('btnPrev');
+const btnNext = document.getElementById('btnNext');
+const btnStop = document.getElementById('btnStop');
+const trackName = document.getElementById('trackName');
+const trackMeta = document.getElementById('trackMeta');
+const progressFill = document.getElementById('progressFill');
+const progressThumb = document.getElementById('progressThumb');
+const progressTrack = document.getElementById('progressTrack');
+const timeNow = document.getElementById('timeNow');
+const timeTotal = document.getElementById('timeTotal');
+const volSlider = document.getElementById('volSlider');
+const volPct = document.getElementById('volPct');
+const statusPill = document.getElementById('statusPill');
+const playlistEl = document.getElementById('playlist');
+const btnAdd = document.getElementById('btnAdd');
+const fileInput = document.getElementById('fileInput');
+
+let tracks = [];
+let idx = -1;
+let playing = false;
+
+const fmt = s => {
+  if (!s || isNaN(s)) return '0:00';
+  return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+};
+
+function setStatus(text, color) {
+  statusPill.textContent = text;
+  statusPill.style.color = color || '#00c8ff';
+  statusPill.style.borderColor = (color || '#00c8ff').replace(')',',0.3)').replace('rgb','rgba') || 'rgba(0,200,255,0.3)';
+}
+
+function loadTrack(i) {
+  if (i < 0 || i >= tracks.length) return;
+  idx = i;
+  audio.src = tracks[i].url;
+  trackName.textContent = tracks[i].name;
+  trackMeta.textContent = `[ ${i+1} / ${tracks.length} ]`;
+  progressFill.style.width = '0%';
+  progressThumb.style.left = '0%';
+  timeNow.textContent = '0:00';
+  timeTotal.textContent = '0:00';
+  render();
+}
+
+function play() {
+  if (!tracks.length) return;
+  if (idx === -1) loadTrack(0);
+  audio.play();
+  playing = true;
+  btnPlay.textContent = '⏸';
+  disc.classList.add('playing');
+  setStatus('● PLAYING', '#55ccff');
+}
+
+function pause() {
+  audio.pause();
+  playing = false;
+  btnPlay.textContent = '▶';
+  disc.classList.remove('playing');
+  setStatus('◌ PAUSED', 'rgba(100,160,255,0.7)');
+}
+
+function stop() {
+  audio.pause();
+  audio.currentTime = 0;
+  playing = false;
+  btnPlay.textContent = '▶';
+  disc.classList.remove('playing');
+  progressFill.style.width = '0%';
+  progressThumb.style.left = '0%';
+  timeNow.textContent = '0:00';
+  setStatus('■ STOP', 'rgba(80,120,255,0.65)');
+}
+
+btnPlay.addEventListener('click', () => playing ? pause() : play());
+btnStop.addEventListener('click', stop);
+btnPrev.addEventListener('click', () => {
+  if (!tracks.length) return;
+  loadTrack(idx <= 0 ? tracks.length - 1 : idx - 1);
+  if (playing) play();
+});
+btnNext.addEventListener('click', () => {
+  if (!tracks.length) return;
+  loadTrack((idx + 1) % tracks.length);
+  if (playing) play();
+});
+
+audio.addEventListener('ended', () => {
+  loadTrack((idx + 1) % tracks.length);
+  play();
+});
+
+audio.addEventListener('timeupdate', () => {
+  if (!audio.duration) return;
+  const pct = (audio.currentTime / audio.duration) * 100;
+  progressFill.style.width = pct + '%';
+  progressThumb.style.left = pct + '%';
+  timeNow.textContent = fmt(audio.currentTime);
+  timeTotal.textContent = fmt(audio.duration);
+});
+
+progressTrack.addEventListener('click', e => {
+  if (!audio.duration) return;
+  const r = progressTrack.getBoundingClientRect();
+  audio.currentTime = ((e.clientX - r.left) / r.width) * audio.duration;
+});
+
+volSlider.addEventListener('input', () => {
+  const v = parseFloat(volSlider.value);
+  audio.volume = v;
+  volPct.textContent = Math.round(v * 100) + '%';
+});
+audio.volume = 0.8;
+
+btnAdd.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', e => {
+  Array.from(e.target.files).forEach(f => {
+    tracks.push({ name: f.name.replace(/\.[^.]+$/, ''), url: URL.createObjectURL(f) });
+  });
+  render();
+  if (idx === -1 && tracks.length) {
+    loadTrack(0);
+    setStatus('◌ READY', 'rgba(140,180,255,0.8)');
+  }
+  fileInput.value = '';
+});
+
+function render() {
+  if (!tracks.length) {
+    playlistEl.innerHTML = '<div class="pl-empty">// AUCUNE PISTE CHARGÉE<br>Clique sur ADD TRACKS pour commencer</div>';
+    return;
+  }
+  playlistEl.innerHTML = tracks.map((t,i) => `
+    <div class="pl-item${i===idx?' active':''}" data-i="${i}">
+      <span class="pl-num">${i===idx ? '▶' : String(i+1).padStart(2,'0')}</span>
+      <span class="pl-name">${t.name}</span>
+      <button class="pl-del" data-d="${i}" title="Supprimer">✕</button>
+    </div>
+  `).join('');
+
+  playlistEl.querySelectorAll('.pl-item').forEach(el => {
+    el.addEventListener('click', e => {
+      if (e.target.classList.contains('pl-del')) return;
+      loadTrack(+el.dataset.i);
+      play();
+    });
+  });
+
+  playlistEl.querySelectorAll('.pl-del').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const i = +btn.dataset.d;
+      URL.revokeObjectURL(tracks[i].url);
+      tracks.splice(i, 1);
+      if (idx === i) {
+        stop();
+        idx = -1;
+        trackName.textContent = 'NO DISC INSERTED';
+        trackMeta.textContent = '[ — / — ]';
+      } else if (idx > i) idx--;
+      if (tracks.length && idx !== -1) trackMeta.textContent = `[ ${idx+1} / ${tracks.length} ]`;
+      render();
+    });
+  });
+}
+</script>
+</body>
+</html>
